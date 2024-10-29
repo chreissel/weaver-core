@@ -1,0 +1,58 @@
+selection:
+
+new_variables:
+        part_mask: ak.ones_like(dr)
+
+preprocess:
+        method: manual
+        data_fraction: 0.5
+
+inputs:
+        pf_points: 
+                length: 64 
+                pad_mode: wrap
+                vars:
+                        - [deta, null]
+                        - [dphi, null]
+
+        pf_features:
+                length: 64
+                pad_mode: wrap
+                vars:
+                        - [dr, null]
+                        - [lpt, null]
+                        - [lptf, -4.7, 0.7]
+                        - [f1, null]
+                        - [f2, null]
+                        - [deta, null]
+                        - [dphi, null]
+                        - [pdgId, null]
+
+        pf_vectors:
+                length: 64
+                pad_mode: wrap
+                vars:
+                        - [deta, null]
+                        - [dphi, null]
+                        - [dr, null]
+                        - [lpt, null]
+
+        pf_mask:
+                length: 64
+                pad_mode: constant
+                vars:
+                        - [part_mask, null]
+
+labels:
+        type: simple
+        value: [label_QCD, label_Tbqq, label_Zqq]
+
+observers:
+        - event
+        - run
+        - luminosityBlock
+        - weight
+
+weights:
+
+
