@@ -142,6 +142,10 @@ parser.add_argument('--backend', type=str, choices=['gloo', 'nccl', 'mpi'], defa
                     help='backend for distributed training')
 parser.add_argument('--cross-validation', type=str, default=None,
                     help='enable k-fold cross validation; input format: `variable_name%%k`')
+parser.add_argument('--out-dim', type=int, default=8,
+                    help='dimensionality of embedding space')
+parser.add_argument('--contrastive-mode', action='store_true', default=False,
+                    help='run contrastive training if this flag is set; otherwise set regression mode or run in classification mode')
 
 
 def to_filelist(args, mode='train'):
@@ -565,6 +569,7 @@ def model_setup(args, data_config, device='cpu'):
         network_options['for_inference'] = True
     if args.use_amp:
         network_options['use_amp'] = True
+    network_options['out_dim'] = args.out_dim
     model, model_info = network_module.get_model(data_config, **network_options)
     if args.load_model_weights:
         model_state = torch.load(args.load_model_weights, map_location='cpu')
@@ -724,6 +729,10 @@ def _main(args):
         _logger.info('Running in regression mode')
         from weaver.utils.nn.tools import train_regression as train
         from weaver.utils.nn.tools import evaluate_regression as evaluate
+    elif args.contrastive_mode:
+        _logger.info('Running in contrastive mode')
+        from weaver.utils.nn.tools import train_contrastive as train
+        from weaver.utils.nn.tools import evaluate_contrastive as evaluate
     else:
         _logger.info('Running in classification mode')
         from weaver.utils.nn.tools import train_classification as train
@@ -817,7 +826,9 @@ def _main(args):
             return
 
         # training loop
-        best_valid_metric = np.inf if args.regression_mode else 0
+        best_valid_metric = 0 
+        if (args.regression_mode or args.contrastive_mode):
+            best_valid_metric = np.inf
         grad_scaler = torch.cuda.amp.GradScaler() if args.use_amp else None
         for epoch in range(args.num_epochs):
             if args.load_epoch is not None:
@@ -843,7 +854,7 @@ def _main(args):
             valid_metric = evaluate(model, val_loader, dev, epoch, loss_func=loss_func,
                                     steps_per_epoch=args.steps_per_epoch_val, tb_helper=tb)
             is_best_epoch = (
-                valid_metric < best_valid_metric) if args.regression_mode else(
+                valid_metric < best_valid_metric) if (args.regression_mode or args.contrastive_mode) else(
                 valid_metric > best_valid_metric)
             if is_best_epoch:
                 best_valid_metric = valid_metric
@@ -912,7 +923,6 @@ def _main(args):
                     save_root(args, output_path, data_config, scores, labels, observers)
                 else:
                     save_parquet(args, output_path, scores, labels, observers)
-
 
 def main():
     args = parser.parse_args()
