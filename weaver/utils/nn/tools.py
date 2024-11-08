@@ -588,7 +588,7 @@ def evaluate_contrastive(model, test_loader, dev, epoch, for_training=True, loss
                 embedding = model(*inputs)
                 label = torch.tensor(label)
                 if not for_training:
-                    all_embedding.append(embedding)
+                    all_embedding.append(embedding.numpy(force=True))
                 
                 if mask is not None:
                     mask = mask.cpu()

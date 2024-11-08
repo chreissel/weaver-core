@@ -48,11 +48,6 @@ labels:
         value: [label_QCD, label_Tbqq, label_Zqq]
 
 observers:
-        - event
-        - run
-        - luminosityBlock
-        - weight
+   - weight
 
 weights:
-
-
