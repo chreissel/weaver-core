@@ -641,7 +641,7 @@ def iotest(args, data_loader):
             _logger.error('Error when writing output parquet file: \n' + str(e))
 
 
-def save_root(args, output_path, data_config, scores, labels, observers):
+def save_root(args, output_path, data_config, scores, labels, observers, contrastive=False):
     """
     Saves as .root
     :param data_config:
@@ -653,25 +653,28 @@ def save_root(args, output_path, data_config, scores, labels, observers):
     import awkward as ak
     from weaver.utils.data.fileio import _write_root
     output = {}
-    if data_config.label_type == 'simple':
-        for idx, label_name in enumerate(data_config.label_value):
-            output[label_name] = (labels[data_config.label_names[0]] == idx)
-            output['score_' + label_name] = scores[:, idx]
+    if contrastive:
+        output['output'] = scores
     else:
-        if scores.ndim <= 2:
-            output['output'] = scores
-        elif scores.ndim == 3:
-            num_classes = len(scores[0, 0, :])
-            try:
-                names = data_config.labels['names']
-                assert (len(names) == num_classes)
-            except KeyError:
-                names = [f'class_{idx}' for idx in range(num_classes)]
-            for idx, label_name in enumerate(names):
+        if data_config.label_type == 'simple':
+            for idx, label_name in enumerate(data_config.label_value):
                 output[label_name] = (labels[data_config.label_names[0]] == idx)
-                output['score_' + label_name] = scores[:, :, idx]
+                output['score_' + label_name] = scores[:, idx]
         else:
-            output['output'] = scores
+            if scores.ndim <= 2:
+                output['output'] = scores
+            elif scores.ndim == 3:
+                num_classes = len(scores[0, 0, :])
+                try:
+                    names = data_config.labels['names']
+                    assert (len(names) == num_classes)
+                except KeyError:
+                    names = [f'class_{idx}' for idx in range(num_classes)]
+                for idx, label_name in enumerate(names):
+                    output[label_name] = (labels[data_config.label_names[0]] == idx)
+                    output['score_' + label_name] = scores[:, :, idx]
+            else:
+                output['output'] = scores
     output.update(labels)
     output.update(observers)
 
@@ -920,7 +923,7 @@ def _main(args):
                     base, ext = os.path.splitext(predict_output)
                     output_path = base + '_' + name + ext
                 if output_path.endswith('.root'):
-                    save_root(args, output_path, data_config, scores, labels, observers)
+                    save_root(args, output_path, data_config, scores, labels, observers, contrastive=args.contrastive_mode)
                 else:
                     save_parquet(args, output_path, scores, labels, observers)
 

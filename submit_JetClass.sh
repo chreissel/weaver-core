@@ -15,7 +15,7 @@ dataopts="--num-workers 1 --fetch-step 0.01"
 out_dim=8
 
 bs=512
-epochs=50
+epochs=40
 samples_per_ep=$(( $bs * 1000 ))
 samples_per_ep_val=$(( $bs * 250 ))
 
@@ -38,14 +38,17 @@ $CMD \
     "ZToQQ:${DATADIR}/val_5M/ZToQQ_*.root" \
     "ZJetsToNuNu:${DATADIR}/val_5M/ZJetsToNuNu_*.root" \
     --data-test \
-    "TTBar:${DATADIR}/test_10M/TTBar_100.root" \
-    "WToQQ:${DATADIR}/test_10M/WToQQ_100.root" \
-    "ZToQQ:${DATADIR}/test_10M/ZToQQ_100.root" \
-    "ZJetsToNuNu:${DATADIR}/test_10M/ZJetsToNuNu_100.root" \
-    "HToBB:${DATADIR}/test_10M/HToBB_100.root" \
-    "HToCC:${DATADIR}/test_10M/HToCC_100.root" \
-    "HToGG:${DATADIR}/test_10M/HToGG_100.root" \
-    "HToWW4Q:${DATADIR}/test_10M/HToWW4Q_100.root" \
+    "TTBar:${DATADIR}/test_20M/TTBar_100.root" \
+    "HToBB:${DATADIR}/test_20M/HToBB_100.root" \
+    "HToCC:${DATADIR}/test_20M/HToCC_100.root" \
+    "HToGG:${DATADIR}/test_20M/HToGG_100.root" \
+    "HToWW2Q1L:${DATADIR}/test_20M/HToWW2Q1L_100.root" \
+    "HToWW4Q:${DATADIR}/test_20M/HToWW4Q_100.root" \
+    "TTBar:${DATADIR}/test_20M/TTBar_100.root" \
+    "TTBarLep:${DATADIR}/test_20M/TTBarLep_100.root" \
+    "WToQQ:${DATADIR}/test_20M/WToQQ_100.root" \
+    "ZToQQ:${DATADIR}/test_20M/ZToQQ_100.root" \
+    "ZJetsToNuNu:${DATADIR}/test_20M/ZJetsToNuNu_100.root" \
     --data-config data/JetClass.yaml --network-config $modelopts \
     --model-prefix trainings/${FEATURE_TYPE}/${model}/{auto}${suffix}/net \
     $dataopts $batchopts $sched_opts --gpus 0\
