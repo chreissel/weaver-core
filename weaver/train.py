@@ -146,6 +146,8 @@ parser.add_argument('--out-dim', type=int, default=8,
                     help='dimensionality of embedding space')
 parser.add_argument('--contrastive-mode', action='store_true', default=False,
                     help='run contrastive training if this flag is set; otherwise set regression mode or run in classification mode')
+parser.add_argument('--coordinates', type=str, default='pxpypz',
+                    help='coordinates given for pairwise embedding')
 
 
 def to_filelist(args, mode='train'):
@@ -569,6 +571,7 @@ def model_setup(args, data_config, device='cpu'):
         network_options['for_inference'] = True
     if args.use_amp:
         network_options['use_amp'] = True
+    network_options['coordinates'] =args.coordinates
     network_options['out_dim'] = args.out_dim
     model, model_info = network_module.get_model(data_config, **network_options)
     if args.load_model_weights:

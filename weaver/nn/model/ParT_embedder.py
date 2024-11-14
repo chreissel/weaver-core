@@ -47,7 +47,8 @@ def get_model(data_config,**kwargs):
         num_heads=8,
         num_layers=4,
         num_cls_layers=2,
-        fc_params=[(128,0.0),(64,0.0)]
+        fc_params=[(128,0.0),(64,0.0)],
+        coordinates=kwargs['coordinates'],
     )
     #cfg.update(**kwargs)
     _logger.info('Model config: %s' % str(cfg))

@@ -76,9 +76,13 @@ def p3_norm(p, eps=1e-8):
     return p[:, :3] / p[:, :3].norm(dim=1, keepdim=True).clamp(min=eps)
 
 
-def pairwise_lv_fts(xi, xj, num_outputs=4, eps=1e-8, for_onnx=False):
-    pti, rapi, phii = to_ptrapphim(xi, False, eps=None, for_onnx=for_onnx).split((1, 1, 1), dim=1)
-    ptj, rapj, phij = to_ptrapphim(xj, False, eps=None, for_onnx=for_onnx).split((1, 1, 1), dim=1)
+def pairwise_lv_fts(xi, xj, num_outputs=4, eps=1e-8, for_onnx=False, coordinates='pxpypz'):
+    if coordinates == 'pxpypz':
+        pti, rapi, phii = to_ptrapphim(xi, False, eps=None, for_onnx=for_onnx).split((1, 1, 1), dim=1)
+        ptj, rapj, phij = to_ptrapphim(xj, False, eps=None, for_onnx=for_onnx).split((1, 1, 1), dim=1)
+    else:
+        pti, rapi, phii, tmpi = xi.split((1,1,1,1), dim=1)
+        ptj, rapj, phij, tmpj = xj.split((1,1,1,1), dim=1)
 
     delta = delta_r2(rapi, phii, rapj, phij).sqrt()
     lndelta = torch.log(delta.clamp(min=eps))
@@ -260,7 +264,7 @@ class PairEmbed(nn.Module):
             self, pairwise_lv_dim, pairwise_input_dim, dims,
             remove_self_pair=False, use_pre_activation_pair=True, mode='sum',
             normalize_input=True, activation='gelu', eps=1e-8,
-            for_onnx=False):
+            for_onnx=False, coordinates='pxpypz'):
         super().__init__()
 
         self.pairwise_lv_dim = pairwise_lv_dim
@@ -269,7 +273,7 @@ class PairEmbed(nn.Module):
         self.remove_self_pair = remove_self_pair
         self.mode = mode
         self.for_onnx = for_onnx
-        self.pairwise_lv_fts = partial(pairwise_lv_fts, num_outputs=pairwise_lv_dim, eps=eps, for_onnx=for_onnx)
+        self.pairwise_lv_fts = partial(pairwise_lv_fts, num_outputs=pairwise_lv_dim, eps=eps, for_onnx=for_onnx, coordinates=coordinates)
         self.out_dim = dims[-1]
 
         if self.mode == 'concat':
@@ -465,6 +469,7 @@ class ParticleTransformer(nn.Module):
                  # network configurations
                  pair_input_dim=4,
                  pair_extra_dim=0,
+                 coordinates='pxpypz',
                  remove_self_pair=False,
                  use_pre_activation_pair=True,
                  embed_dims=[128, 512, 128],
@@ -508,7 +513,7 @@ class ParticleTransformer(nn.Module):
         self.pair_embed = PairEmbed(
             pair_input_dim, pair_extra_dim, pair_embed_dims + [cfg_block['num_heads']],
             remove_self_pair=remove_self_pair, use_pre_activation_pair=use_pre_activation_pair,
-            for_onnx=for_inference) if pair_embed_dims is not None and pair_input_dim + pair_extra_dim > 0 else None
+            for_onnx=for_inference,coordinates=coordinates) if pair_embed_dims is not None and pair_input_dim + pair_extra_dim > 0 else None
         self.blocks = nn.ModuleList([Block(**cfg_block) for _ in range(num_layers)])
         self.cls_blocks = nn.ModuleList([Block(**cfg_cls_block) for _ in range(num_cls_layers)])
         self.norm = nn.LayerNorm(embed_dim)
