@@ -1,4 +1,18 @@
 #!/bin/bash
+#SBATCH --job-name=weaver_JetClass
+#SBATCH --partition=gpu_test
+#SBATCH --time=04:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=100G
+#SBATCH --chdir=/n/home03/creissel/weaver-core
+#SBATCH --output=slurm_monitoring/%x-%j.out
+
+source ~/.bashrc
+source /n/home03/creissel/miniforge3/etc/profile.d/conda.sh
+conda activate weaver
 
 set -x
 echo "args: $@"
@@ -26,7 +40,7 @@ batchopts="--num-epochs $epochs --batch-size $bs --samples-per-epoch $samples_pe
 
 suffix=${model}
 
-$CMD \
+srun $CMD \
     --data-train \
     "TTBar:${DATADIR}/train_100M/TTBar_*.root" \
     "WToQQ:${DATADIR}/train_100M/WToQQ_*.root" \
